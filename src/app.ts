@@ -1,12 +1,17 @@
 import createError from 'http-errors';
-import express, {Request, Response, NextFunction,} from 'express';
+import express, {Request, Response} from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 
+/* 
+* ssh-keygen -t rsa -P "" -b 4096 -m PEM -f jwtRS256.key
+* ssh-keygen -e -m PEM -f jwtRS256.key > jwtRS256.key.pub
+*
+*/
+
 import initRoutes from './routes/index';
 import 'dotenv/config';
-import config from './config';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,13 +33,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 initRoutes(app);
 
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err: ErrorStatus, req: Request, res: Response, next: NextFunction) {
+app.use(function(err: ErrorStatus, req: Request, res: Response) {
   // set locals, only providing error in development
   res.locals.message = err.message; 
   res.locals.error = req.app.get('env') === 'development' ? err : {};

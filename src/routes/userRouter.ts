@@ -3,9 +3,10 @@ const userRouter = express.Router();
 
 import userCrudController from '../controllers/userCrudController'
 
-userRouter.get('/', (req, res) => {
-    res.send("Users API")
-});
-userRouter.get('/users', userCrudController.getUsers);
+userRouter.post('/new', userCrudController.createUser);
+userRouter.put('/update', userCrudController.updateUser);
+userRouter.delete('/:id', userCrudController.deleteUser);
+userRouter.get('/:id', userCrudController.getUser);
+userRouter.get('/', userCrudController.getUsers);
 
 export default userRouter;
