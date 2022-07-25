@@ -1,4 +1,4 @@
-import {Express, Request, Response} from 'express'
+import {Express} from 'express'
 
 import userRouter from './userRouter'
 import authRouter from './authRouter';
@@ -11,9 +11,6 @@ import reviewRouter from './reviewRouter';
 export default function (app: Express) {
     applyPassportStrategy(passport);
 
-    app.get('/', (req: Request, res: Response) => {
-        res.status(200).json({success: true, message: "API Homepage"});
-    })
     app.use('/users', passport.authenticate('jwt', {session: false}), userRouter);
     app.use('/account', authRouter);
     app.use('/books', passport.authenticate('jwt', {session: false}), bookRouter);

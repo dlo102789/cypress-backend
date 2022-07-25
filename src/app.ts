@@ -3,6 +3,7 @@ import express, {Request, Response} from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
+import serveStatic from 'serve-static';
 
 /* 
 * ssh-keygen -t rsa -P "" -b 4096 -m PEM -f jwtRS256.key
@@ -22,17 +23,21 @@ interface ErrorStatus {
 }
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
+// app.set('views', path.join(__dirname, 'views'));
+// app.set('view engine', 'jade');
 
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+//app.use(express.static(path.join(__dirname, 'client/dist')));
+app.use(serveStatic(path.join(__dirname, "../client/dist/client")))
 
 initRoutes(app);
 
+// app.use("/", (req: Request, res: Response) => {
+//   res.sendFile(path.join(__dirname, "../client/dist/client/index.html"));
+// })
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
