@@ -15,9 +15,10 @@ export default class authController {
         firstName: req.body.firstName as string,
         lastName: req.body.lastName as string,
         email: req.body.email as string,
-        isAdmin: req.body.isAdmin as boolean,
+        isAdmin: false,
         hash: hash,
         salt: salt,
+        books: []
       };
 
       const params: DynamoDB.DocumentClient.PutItemInput = {
@@ -34,7 +35,7 @@ export default class authController {
         const jwt = issueJWT(user);
         return res.status(200).json({
           success: true,
-          content: result,
+          user: user.id,
           token: jwt.token,
           expiresIn: jwt.expires,
         });

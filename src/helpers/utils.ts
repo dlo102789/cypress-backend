@@ -26,12 +26,9 @@ export const validatePassword = (password: string, hash: string, salt: string): 
 }
 
 export const genPassword = (password: string) => {
-    console.log("start genPassword");
     return new Promise<SaltHash>((resolve, reject) => {
         const salt = randomBytes(32).toString('hex');
-        console.log("creating salt");
         pbkdf2(password, salt, 10000, 64, 'sha512', (err, derivedKey) => {
-            console.log("generated password");
             if (err)
                 reject(err.message);
             else {

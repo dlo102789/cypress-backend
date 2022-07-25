@@ -2,12 +2,16 @@ import { Request, Response } from 'express';
 import client from '../helpers/database'
 import { DynamoDB } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '../models/User';
+import { Book } from '../models/Book';
+
+const TABLE_NAME = 'cypress-users';
 
 export default class UserCrudController {
 
     static async getUsers(req: Request, res: Response) {
         const params: DynamoDB.DocumentClient.ScanInput = {
-            TableName: 'cypress-users' 
+            TableName: TABLE_NAME 
         }
  
         const data = await client.scan(params).promise();
@@ -21,7 +25,7 @@ export default class UserCrudController {
     static async getUser(req: Request, res: Response) {
         const id = req.params.id;
         const params: DynamoDB.DocumentClient.GetItemInput = {
-            TableName: 'cypress-users',
+            TableName: TABLE_NAME,
             Key: {
                 id
             }
@@ -37,58 +41,72 @@ export default class UserCrudController {
     }
 
     static async createUser(req: Request, res: Response) {
-        const user = {
+        const user: User = {
             id: uuidv4(),
+            books: [],
             ...req.body
         }
         const params: DynamoDB.DocumentClient.PutItemInput = {
-            TableName: 'cypress-users',
+            TableName: TABLE_NAME,
             Item: user,
             ConditionExpression: 'attribute_not_exists(id)'
         }
 
-        const data = await client.put(params).promise();
+        try {
+            const data = await client.put(params).promise();
 
-        if (!data) {
-            return res.status(500).json({success: false, message: "User could not be created"});
+            if (!data) {
+                return res.status(500).json({success: false, message: "User could not be created"});
+            }
+
+            return res.status(200).json({success: true, content: data});
         }
-
-        return res.status(200).json({success: true, content: data});
+        catch(err) {
+            return res.status(500).json({success: false, message: err});
+        }
+        
     }
 
     static async updateUser(req: Request, res: Response) {
         const id = req.body.id;
         const user = req.body;
-        const idCheck = await client.get({
-            TableName: 'cypress-users',
-            Key: {
-                id
+
+        try {
+            const idCheck = await client.get({
+                TableName: TABLE_NAME,
+                Key: {
+                    id
+                }
+            }).promise();
+    
+            if (!idCheck) {
+                return res.status(500).json({success: false, message: "user does not exist"});
             }
-        }).promise();
-
-        if (!idCheck) {
-            return res.status(500).json({success: false, message: "user does not exist"});
-        }
-
-        const data = await client.put({
-            TableName: 'cypress-users',
-            Item: {
-                user
+    
+            const data = await client.put({
+                TableName: TABLE_NAME,
+                Item: {
+                    user
+                }
+            }).promise();
+    
+            if (!data) {
+                return res.status(500).json({success: false, message: "Could not update user"});
             }
-        }).promise();
-
-        if (!data) {
-            return res.status(500).json({success: false, message: "Could not update user"});
+    
+            return res.status(200).json({success: true, content: data});
         }
-
-        return res.status(200).json({success: true, content: data});
+        catch(err) {
+            return res.status(500).json({success: false, message: err});
+        }
+        
     }
 
     static async deleteUser(req: Request, res: Response) {
         const id = req.params.id;
 
         const data = await client.delete({
-            TableName: 'cypress-users',
+            TableName: TABLE_NAME,
             Key: {
                 id
             }
@@ -99,5 +117,90 @@ export default class UserCrudController {
         }
 
         return res.status(200).json({success: true, content: data});
+    }
+
+    static async addBook(req: Request, res: Response) {
+        const book: Book = req.body.book;
+        const id = req.body.id;
+
+        try {
+            const userResult = await client.get({
+                TableName: TABLE_NAME,
+                Key: {
+                    id
+                }
+            }).promise();
+
+            const user = userResult.Item as User;
+            
+            user.books.push(book);
+
+            const result = await client.put({
+                TableName: TABLE_NAME,
+                Item: user
+            }).promise();
+
+            return res.status(200).json({success: true, content: result});
+        }
+        catch(err) {
+            return res.status(500).json({success: false, message: err});
+        }
+    }
+
+    static async updateBooks(req: Request, res: Response) {
+        const id = req.body.id;
+        const books = req.body.books;
+
+        try {
+            const userResult = await client.get({
+                TableName: TABLE_NAME,
+                Key: {
+                    id
+                }
+            }).promise();
+
+            const user = userResult.Item as User;
+
+            user.books = books;
+
+            const result = await client.put({
+                TableName: TABLE_NAME,
+                Item: user
+            }).promise();
+
+            return res.status(200).json({success: true, content: result});
+        }
+        catch(err) {
+            return res.status(500).json({success: false, message: err});
+        }
+    }
+
+    static async deleteBook(req: Request, res: Response) {
+        const id = req.body.id;
+        const book = req.body.book;
+
+        try {
+            const userResult = await client.get({
+                TableName: TABLE_NAME,
+                Key: id
+            }).promise();
+
+            const user = userResult.Item as User;
+
+            if (!(book in user.books))
+                return res.status(401).json({success: false, message: "Book not found."});
+
+            user.books = user.books.filter(element => element != book);
+
+            const result = await client.put({
+                TableName: TABLE_NAME,
+                Item: user
+            }).promise();
+
+            return res.status(200).json({success: true, content: result});
+        }
+        catch(err) {
+            return res.status(500).json({success: false, message: err});
+        }
     }
 }
