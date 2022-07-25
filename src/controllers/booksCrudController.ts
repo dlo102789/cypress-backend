@@ -46,7 +46,7 @@ export default class BooksCrudController {
     static async createBook(req: Request, res: Response) {
         const book: Book = {
             id: uuidv4(),
-            ...req.body.book
+            ...req.body
         }
 
         const params: DynamoDB.DocumentClient.PutItemInput = {
@@ -57,9 +57,9 @@ export default class BooksCrudController {
         try {
             const result = await client.put(params).promise();
 
-            if (!result) return res.status(500).json({success: false, message: "Could not add user"});
+            if (!result) return res.status(500).json({success: false, message: "Could not add book"});
 
-            return res.status(200).json({success: false, content: result});
+            return res.status(200).json({success: true, content: result});
         }
         catch(err) {
             return res.status(500).json({success: false, message: err});

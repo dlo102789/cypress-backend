@@ -4,9 +4,10 @@ import { PassportStatic } from "passport";
 import {} from "passport";
 import client from '../helpers/database'
 import { DynamoDB } from "aws-sdk";
+import path from 'path'
 
 
-const PUB_KEY = fs.readFileSync("../../keys/id_rsa_pub.pem", "utf8");
+const PUB_KEY = fs.readFileSync(path.join(__dirname, "../../keys/id_rsa_pub.pem"), "utf8");
 
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
